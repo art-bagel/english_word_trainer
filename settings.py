@@ -4,4 +4,8 @@ MAIN_WINDOW_HEIGHT = 500
 INDENT_LEFT = 50
 INDENT_TOP = 50
 RESIZE_W = False
-RESIZE_H = True
+RESIZE_H = False
+
+
+#main content frame
+MCF_PADDING = (20, 20, 20, 20)
