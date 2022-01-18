@@ -22,6 +22,7 @@ main_frame.grid(column=0, row=0, sticky=(N, W, E, S))
 
 
 
+
 # Create the different widgets
 table_words_labl = ttk.Label(main_frame, text='Table of learned words ')
 table_words = Listbox(main_frame, height=29)
