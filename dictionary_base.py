@@ -62,7 +62,6 @@ class Dictionary():
                 self.words['eng'].append(row[1])
                 self.words['rus'].append(row[2])
                 self.words['weight'].append(row[3])
-        print(response)
 
     def get_id(self, word):
         """Получает id слова."""
@@ -119,10 +118,8 @@ class Dictionary():
         query = ("UPDATE dict "
                  "SET english_word= ?, russian_word= ?, weight= ?  "
                  "WHERE id= ?")
-        print(id, eng_word, rus_word)
         value = (eng_word.lower(), rus_word.lower(), weight, id)
         response = self._send_request(query, value)
-        print(response)
         if response['status'] == 'OK':
             self._get_and_slice_data_()
         return response['status'], response['massage']
