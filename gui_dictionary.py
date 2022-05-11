@@ -9,9 +9,9 @@ class GuiDictionary(ttk.Frame):
     def __init__(self, parent=None, dictionary=None):
         ttk.Frame.__init__(self, parent, padding=st.MCF_PADDING)
         self.grid(column=0, row=0, sticky=(N, W, E, S))
-        self.create_main_widgets()
         self.dictionary = dictionary
         self.current_index = None
+        self.create_main_widgets()
         self.set_default_options()
         self.alert = Alerts()
 

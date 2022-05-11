@@ -6,16 +6,17 @@ from alerts import Alerts
 
 
 class Dictionary():
+    DATA_BASE_NAME = 'dictionary_db'
+
     def __init__(self):
         self._get_and_slice_data_()
         self.alert = Alerts()
-        self.data_base_name = 'dictionary_db'
-        if not os.path.exists(self.data_base_name):
+        if not os.path.exists(self.DATA_BASE_NAME):
             self.create_db()
 
     def create_db(self):
         """Создает базу данных."""
-        connect = sqlite3.connect(self.data_base_name)
+        connect = sqlite3.connect(self.DATA_BASE_NAME)
         cursor = connect.cursor()
         cursor.execute("""CREATE TABLE dict (id INTEGER PRIMARY KEY, 
                                              english_word TEXT, 
@@ -31,7 +32,7 @@ class Dictionary():
             'data': None
         }
         try:
-            db = sqlite3.connect(self.data_base_name)
+            db = sqlite3.connect(self.DATA_BASE_NAME)
             cur = db.cursor()
             cur.execute(*request)
             db.commit()
@@ -40,7 +41,8 @@ class Dictionary():
             cur.close()
             db.close()
             response['status'] = 'OK'
-        except Exception:
+        except Exception as error:
+            print(error)
             response['status'] = 'DROP'
             response['massage'] = 'Ошибка при обращении к базе данных!'
         return response
@@ -60,6 +62,7 @@ class Dictionary():
                 self.words['eng'].append(row[1])
                 self.words['rus'].append(row[2])
                 self.words['weight'].append(row[3])
+        print(response)
 
     def get_id(self, word):
         """Получает id слова."""
