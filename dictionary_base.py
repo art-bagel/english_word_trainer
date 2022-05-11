@@ -1,32 +1,52 @@
+import os
 import sqlite3
 import random
+
+from alerts import Alerts
 
 
 class Dictionary():
     def __init__(self):
         self._get_and_slice_data_()
+        self.alert = Alerts()
+        self.data_base_name = 'dictionary_db'
+        if not os.path.exists(self.data_base_name):
+            self.create_db()
 
-    def __send_request__(self, *request):
+    def create_db(self):
+        """Создает базу данных."""
+        connect = sqlite3.connect(self.data_base_name)
+        cursor = connect.cursor()
+        cursor.execute("""CREATE TABLE dict (id INTEGER PRIMARY KEY, 
+                                             english_word TEXT, 
+                                             russian_word TEXT,
+                                             weight INTEGER)
+                       """)
+
+    def _send_request(self, *request):
+        """Отправляет запрос в базу данных."""
         response = {
             'status': '',
             'massage': '',
             'data': None
         }
         try:
-            db = sqlite3.connect('data_base_dictionary')
+            db = sqlite3.connect(self.data_base_name)
             cur = db.cursor()
             cur.execute(*request)
             db.commit()
             if 'SELECT' in request[0]:
                 response['data'] = cur.fetchall()
             cur.close()
+            db.close()
             response['status'] = 'OK'
-        except:
+        except Exception:
             response['status'] = 'DROP'
             response['massage'] = 'Ошибка при обращении к базе данных!'
         return response
 
     def _get_and_slice_data_(self):
+        """Получает данные из базы и сохраняем в словарь."""
         self.words = {
             'id': [],
             'eng': [],
@@ -42,30 +62,31 @@ class Dictionary():
                 self.words['weight'].append(row[3])
 
     def get_id(self, word):
+        """Получает id слова."""
         word = word.lower().strip()
         if word in self.words['eng']:
             index = self.words['eng'].index(word)
             return self.words['id'][index]
-        elif word in self.words['rus']:
-            index = self.words['rus'].index(word)
-            return self.words['id'][index]
         return None
 
     def change_weight(self, id, user_answer):
-        # decrement or increment weight
-        query_set = "UPDATE dict SET scoring= ? WHERE id= ?"
+        """Изменяет вес слова."""
+        query = "UPDATE dict SET weight= ? WHERE id= ?"
         index = self.words['id'].index(id)
         if user_answer:
             if self.words['weight'][index] > 1:
                 self.words['weight'][index] -= 1
         else:
             self.words['weight'][index] += 1
-        print(self.words['weight'])
 
-        response = self.__send_request__(query_set, (self.words['weight'][index], id))
+        response = self._send_request(query, (self.words['weight'][index], id))
         return response['status'], response['massage']
 
     def get_random_word(self):
+        """Получает случаное слово из словаря."""
+        if not self.words['eng']:
+            self.alert.warning("Словарь пуст! Для тренеровки наполните словарь!")
+            return None
         random_word = random.choices(self.words['eng'], weights=self.words['weight'])[0]
         index = self.words['eng'].index(random_word)
         response = {
@@ -76,36 +97,40 @@ class Dictionary():
         return response
 
     def delete_word(self, id):
+        """Удаляет слова из базы данных."""
         query = "DELETE FROM dict WHERE id= ?"
         value = (id,)
-        response = self.__send_request__(query, value)
+        response = self._send_request(query, value)
         if response['status'] == 'OK':
             self._get_and_slice_data_()
         return response['status'], response['massage']
 
     def get_all_from_db(self):
+        """Получает все слова из базы данных."""
         request = "SELECT * FROM dict"
-        response = self.__send_request__(request)
+        response = self._send_request(request)
         return response
 
     def change_word(self, id, eng_word, rus_word, weight=1):
-        query = "UPDATE dict " \
-                "SET english_word= ?, translate_word= ?, scoring= ?  " \
-                "WHERE id= ?"
+        """Изменяет слово в базе данных."""
+        query = ("UPDATE dict "
+                 "SET english_word= ?, russian_word= ?, weight= ?  "
+                 "WHERE id= ?")
+        print(id, eng_word, rus_word)
         value = (eng_word.lower(), rus_word.lower(), weight, id)
-        response = self.__send_request__(query, value)
+        response = self._send_request(query, value)
         print(response)
         if response['status'] == 'OK':
             self._get_and_slice_data_()
         return response['status'], response['massage']
 
     def add_word(self, eng_word, rus_word):
-        request = "INSERT INTO dict(english_word, translate_word, scoring)" \
-                  " VALUES(?, ?, ?);"
+        """Добавляет новое слово в базу данных."""
+        request = ("INSERT INTO dict(english_word, russian_word, weight)"
+                  " VALUES(?, ?, ?);")
 
         value = (eng_word.lower(), rus_word.lower(), 1)
-        response = self.__send_request__(request, value)
+        response = self._send_request(request, value)
         if response['status'] == 'OK':
             self._get_and_slice_data_()
         return response['status'], response['massage']
-
